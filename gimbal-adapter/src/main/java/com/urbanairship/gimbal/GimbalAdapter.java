@@ -91,6 +91,14 @@ public class GimbalAdapter {
          * @param visit The Gimbal visit.
          */
         void onRegionExited(RegionEvent event, Visit visit);
+        
+        /**
+         * Called when a Urban Airship Region enter event is created with a delay from a Gimbal Visit.
+         *
+         * @param event The Urban Airship event.
+         * @param visit The Gimbal visit.
+         */
+        void onRegionEnteredWithDelay(RegionEvent event, Visit visit, int delayTimeInSeconds);
     }
 
     /**
@@ -133,6 +141,26 @@ public class GimbalAdapter {
                     synchronized (listeners) {
                         for (Listener listener : new ArrayList<>(listeners)) {
                             listener.onRegionExited(exit, visit);
+                        }
+                    }
+                }
+            });
+        }
+        
+        @Override
+        public void onVisitStartWithDelay(final Visit visit, final int delayTimeInSeconds) {
+            Log.i(TAG, "Entered place: " + visit.getPlace().getName() + "Entrance date: " +
+                    DateUtils.createIso8601TimeStamp(visit.getArrivalTimeInMillis()) + "Dwell time: " + delayTimeInSeconds);
+
+            UAirship.shared(new UAirship.OnReadyCallback() {
+                @Override
+                public void onAirshipReady(UAirship airship) {
+                    RegionEvent enter = new RegionEvent(visit.getPlace().getIdentifier(), SOURCE, RegionEvent.BOUNDARY_EVENT_ENTER_WITH_DELAY);
+                    airship.getAnalytics().addEvent(enter);
+
+                    synchronized (listeners) {
+                        for (Listener listener : new ArrayList<>(listeners)) {
+                            listener.onRegionEnteredWithDelay(enter, visit, delayTimeInSeconds);
                         }
                     }
                 }
